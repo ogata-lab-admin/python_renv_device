@@ -88,8 +88,8 @@ def event(func):
     return wrapper__
 
 
-def _parse_param(func_name, line_num, line, args):
-    value = line[6:].strip()
+def _parse_param(func_name, line_num, line, args, delim):
+    value = line[len(delim)+1:].strip()
     typeStr = value[: value.find(' ')+1].strip()
     value = value[value.find(' ')+1:]
     name = value.split()[0][:-1]
@@ -144,7 +144,7 @@ def _parse_doc(func_name, doc, args):
     for i, line in enumerate(doc.split('\n')):
         line = line.strip()
         if line.startswith(':') and line.split()[0][1:] == delim:
-            params.append(_parse_param(func_name, i, line, args))
+            params.append(_parse_param(func_name, i, line, args, delim))
             param_parse = True
             continue
 
@@ -264,7 +264,7 @@ class RenvDevice():
             self.info('Conneting to R-env: "wss://%s"' % host)
             if not deviceId: deviceId = self.__deviceId
             if not devicePassword: devicePassword = self.__devicePassword
-            websocket.enableTrace(True)
+            # websocket.enableTrace(True)
             self.__ws = websocket.WebSocketApp("wss://" + host + '/?id=%s&password=%s' % (self.__deviceId, self.__devicePassword),
                                                on_message=lambda ws, msg: self._on_message(ws,msg),
                                                on_close=lambda ws: self._on_close(ws),

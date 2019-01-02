@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -encoding: utf-8 
 
-import os, sys, traceback, logging, codecs, argparse
+import os, sys, traceback, logging, codecs, argparse, threading
 
 from logging import getLogger
 
@@ -54,7 +54,15 @@ class MyRenvDevice(RenvDevice):
         self._msg_buffer.append('MyRenvDevice.onEcho(' + value + ') called.')
         pass
 
-
+    @event
+    def sendMyEvent01(self, value):
+        """
+        This function send simple string value to R-env
+        
+        :return String value: Simple String argument passed to event function
+        """
+        return {'value': value}
+        
 
 def main():
     try:
@@ -66,10 +74,30 @@ def main():
         parser.add_argument('-n', '--number of port', help='Device Server Port Number', type=str, dest='port', required=True)
         args = parser.parse_args()
         rd = MyRenvDevice(args.uuid, args.id, args.password)
+        print('Device Info is')
+        print rd.getDeviceInfo()
         rd.connect(args.host + ':' + args.port)
-        rd.run_forever()
+        th = threading.Thread(target=rd.run_forever)
+        th.start()
+        def show_help():
+            print('USAGE:')
+            print('  type "quit" to exit.')
+        while True:
+            c = raw_input('Input Command(type "help" to show help):')
+            if len(c.strip()) == 0: continue
+            elif c.strip() == 'help': show_help()
+            elif c.strip() == 'quit': break
+            else:
+                rd.sendMyEvent01(c.strip())
+        print('Stopping R-env Device Example')
+        rd.stop_running()
+        #th.join()
+        
     except:
+        print('Error Traced')
         traceback.print_exc()
+        
+        sys.exit(-1)
     
     
 if __name__ == '__main__':
